@@ -43,7 +43,7 @@ export default async function LandingPage() {
                     </p>
                     <div className="flex justify-center mt-8">
                         <Link
-                            href={`/invitation/${qrToken}`}
+                            href={`/guest/${qrToken}`}
                             className="px-10 py-4 bg-rose-600 text-white rounded-full font-bold shadow-xl hover:bg-rose-700 hover:scale-105 transition-all flex items-center gap-2 group"
                         >
                             Bắt đầu ngay
