@@ -8,7 +8,7 @@ import { UserRole } from "@/models/User";
 export async function GET(request: Request) {
     try {
         const sessionCookie = cookies().get("session")?.value;
-        const session = await decrypt(sessionCookie);
+        const session = (await decrypt(sessionCookie)) as { userId: string; role: string } | null;
 
         if (!session) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const sessionCookie = cookies().get("session")?.value;
-        const session = await decrypt(sessionCookie);
+        const session = (await decrypt(sessionCookie)) as { userId: string; role: string } | null;
 
         if (!session) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

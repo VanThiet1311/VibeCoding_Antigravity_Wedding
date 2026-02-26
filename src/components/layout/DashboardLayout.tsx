@@ -2,27 +2,44 @@
 
 import React from "react";
 import { Layout, Menu } from "antd";
-import { Users, Mail, LayoutDashboard, Settings, PenTool, LogOut } from "lucide-react";
+import { Users, Mail, LayoutDashboard, Settings, PenTool, LogOut, Shield, Calendar, Heart } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 
 const { Header, Sider, Content } = Layout;
+
+interface DashboardLayoutProps {
+    children: React.ReactNode;
+    userRole?: string;
+}
 
 /**
  * DashboardLayout
  * The main authenticated layout containing the side navigation (Ant Design Menu),
  * header with logout/profile, and the central content area.
  */
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
     const pathname = usePathname();
     const router = useRouter();
 
     const menuItems = [
         { key: "/dashboard", icon: <LayoutDashboard size={18} />, label: "Tổng quan" },
-        { key: "/weddings", icon: <PenTool size={18} />, label: "Đám cưới của tôi" },
-        { key: "/family", icon: <Users size={18} />, label: "Sơ đồ gia đình" },
-        { key: "/guests", icon: <Mail size={18} />, label: "Danh sách khách" },
-        { key: "/album", icon: <Settings size={18} />, label: "Lịch sử đi tiệc" },
+        { key: "/dashboard/weddings", icon: <PenTool size={18} />, label: "Đám cưới của tôi" },
+        { key: "/dashboard/ceremonies", icon: <Calendar size={18} />, label: "Danh sách nghi lễ" },
+        { key: "/dashboard/guests", icon: <Users size={18} />, label: "Quản lý khách mời" },
+        { key: "/dashboard/family", icon: <Heart size={18} />, label: "Sơ đồ gia đình" },
+        { key: "/dashboard/support", icon: <Mail size={18} />, label: "Hỗ trợ khách" },
+        { key: "/dashboard/album", icon: <Settings size={18} />, label: "Lịch sử đi tiệc" },
+        { key: "/dashboard/card", icon: <PenTool size={18} />, label: "Thiệp mời" },
     ];
+
+    if (userRole === "admin") {
+        menuItems.push({
+            key: "/admin",
+            icon: <Shield size={18} className="text-rose-500" />,
+            label: "Quản lý tài khoản"
+        });
+    }
 
     return (
         <Layout className="min-h-screen bg-champagne-light">
@@ -33,14 +50,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 collapsedWidth="0"
                 className="shadow-soft z-10 border-r border-rose-50"
             >
-                <div className="p-6 text-center border-b border-rose-50 flex items-center justify-center gap-2 cursor-pointer" onClick={() => router.push('/dashboard')}>
+                <Link href="/dashboard" className="p-6 text-center border-b border-rose-50 flex items-center justify-center gap-2 transition-colors hover:bg-rose-50/30">
                     <div className="w-8 h-8 rounded-full bg-rose-600 flex items-center justify-center text-white font-serif italic text-lg shadow-sm">
                         W
                     </div>
                     <h1 className="font-serif text-xl text-rose-600 font-bold tracking-wide mb-0 hidden md:block">
                         Manager
                     </h1>
-                </div>
+                </Link>
                 <Menu
                     mode="inline"
                     selectedKeys={[pathname]}

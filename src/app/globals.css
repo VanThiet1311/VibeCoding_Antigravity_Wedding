@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ───────────────────────────────────────────── */
+:root {
+  --color-background:      #fffaf8;
+  --color-foreground:      #1c1917;
+  --color-surface:         #ffffff;
+  --color-border:          #f3e8e2;
+  --color-champagne-light: #fdf6f0;
+  --color-muted:           #78716c;
+}
+
+/* ─── Base Reset ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-champagne-light);
+  color: var(--color-foreground);
+  font-family: var(--font-inter), sans-serif;
+}
+
+/* ─── Ant Design overrides ───────────────────────────────────── */
+.ant-layout {
+  background: transparent !important;
+}
+
+.ant-menu-item-selected {
+  background-color: #fff1f2 !important;
+  color: #e11d48 !important;
+}
+
+.ant-menu-item-selected .ant-menu-item-icon,
+.ant-menu-item-selected svg {
+  color: #e11d48 !important;
+}

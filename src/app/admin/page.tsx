@@ -1,17 +1,9 @@
+import { requireAdmin } from "@/lib/rbac";
 import dbConnect from "@/lib/db";
-import User, { UserRole } from "@/models/User";
-import { cookies } from "next/headers";
-import { decrypt } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import User from "@/models/User";
 
 export default async function AdminDashboardPage() {
-    const sessionCookie = cookies().get("session")?.value;
-    const session = await decrypt(sessionCookie);
-
-    // Security check, though middleware should catch this
-    if (!session || session.role !== UserRole.ADMIN) {
-        redirect("/dashboard");
-    }
+    await requireAdmin();
 
     await dbConnect();
 

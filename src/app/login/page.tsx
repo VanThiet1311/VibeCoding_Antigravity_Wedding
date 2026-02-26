@@ -33,7 +33,7 @@ export default function LoginPage() {
                 throw new Error(data.message || "Authentication failed");
             }
 
-            router.push("/dashboard");
+            router.push("/");
             router.refresh();
         } catch (err: unknown) {
             if (err instanceof Error) {

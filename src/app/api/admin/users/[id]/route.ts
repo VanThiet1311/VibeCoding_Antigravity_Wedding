@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import User, { UserRole } from "@/models/User";
-import { decrypt } from "@/lib/auth";
-import { cookies } from "next/headers";
+import { requireAdmin } from "@/lib/rbac";
 
 // Prevent modifications to the main admin
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.com";
@@ -12,12 +11,7 @@ export async function PUT(
     { params }: { params: { id: string } }
 ) {
     try {
-        const sessionCookie = cookies().get("session")?.value;
-        const session = await decrypt(sessionCookie);
-
-        if (!session || session.role !== UserRole.ADMIN) {
-            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-        }
+        const session = await requireAdmin();
 
         const data = await request.json();
         await dbConnect();
@@ -55,12 +49,7 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        const sessionCookie = cookies().get("session")?.value;
-        const session = await decrypt(sessionCookie);
-
-        if (!session || session.role !== UserRole.ADMIN) {
-            return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-        }
+        const session = await requireAdmin();
 
         await dbConnect();
 

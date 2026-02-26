@@ -7,6 +7,7 @@ export enum WeddingStatus {
 
 export interface IWedding extends Document {
     ownerId: mongoose.Types.ObjectId;
+    slug: string;
     brideName: string;
     groomName: string;
     weddingDate: Date;
@@ -18,6 +19,7 @@ export interface IWedding extends Document {
 const WeddingSchema: Schema = new Schema(
     {
         ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+        slug: { type: String, required: true, unique: true, index: true },
         brideName: { type: String, required: true },
         groomName: { type: String, required: true },
         weddingDate: { type: Date, required: true },

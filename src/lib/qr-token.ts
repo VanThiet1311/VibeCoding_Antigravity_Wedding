@@ -4,10 +4,11 @@ import crypto from "crypto";
 const SECRET = process.env.JWT_SECRET || "fallback_secret_for_development";
 
 export interface QRPayload {
-    wid: string; // weddingId
-    cid: string; // ceremonyId
-    gid: string; // guestId
-    iat: number; // issuedAtTimestamp
+    weddingId: string;
+    ceremonyId: string;
+    guestId: string;
+    invitationId: string;
+    issuedAt: number;
 }
 
 /**

@@ -8,57 +8,80 @@ export type CheckInResponseShape = "accepted" | "duplicate" | "conflict" | "wron
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { token, deviceId, actualCompanions, scanTime } = body;
+        const { token, deviceId, actualCompanions, guestId: directGuestId, ceremonyId: directCeremonyId } = body;
 
-        if (!token) {
-            return NextResponse.json({ status: "invalid" }, { status: 400 });
+        let finalGuestId = directGuestId;
+        let finalCeremonyId = directCeremonyId;
+
+        // 1. Identification: Either via Token (Staff scan) or Direct ID (Guest self-scan)
+        if (token) {
+            const payload = validateQRToken(token);
+            if (!payload) {
+                return NextResponse.json({ status: "invalid" }, { status: 400 });
+            }
+            finalGuestId = payload.guestId;
+            finalCeremonyId = payload.ceremonyId;
         }
 
-        // 1. Verify Signature (Server re-verification)
-        const payload = validateQRToken(token);
-        if (!payload) {
-            return NextResponse.json({ status: "invalid" }, { status: 400 });
+        if (!finalGuestId || !finalCeremonyId) {
+            return NextResponse.json({ status: "invalid", message: "Missing guest or ceremony identity" }, { status: 400 });
         }
 
         await dbConnect();
 
         // 2. Fetch the Guest record
-        const guest = await Guest.findById(payload.gid);
+        const guest = await Guest.findById(finalGuestId);
 
         if (!guest) {
-            return NextResponse.json({ status: "invalid" }, { status: 404 });
+            return NextResponse.json({ status: "invalid", message: "Guest not found" }, { status: 404 });
         }
 
         // 3. Verify it belongs to the exact ceremony
-        if (guest.ceremonyId.toString() !== payload.cid) {
+        if (guest.ceremonyId.toString() !== finalCeremonyId) {
             return NextResponse.json({ status: "wrong_ceremony" }, { status: 400 });
         }
 
-        // 4. State Machine Transition checking
-        if (guest.attendanceStatus === AttendanceStatus.ARRIVED || guest.attendanceStatus === AttendanceStatus.SEATED) {
-            // Check for multi-device conflict (Race condition)
-            // If the server scan count is > 0, and this request comes with a significantly newer scanTime,
-            // or the device IDs differ significantly, we consider it a duplicate or conflict.
-            // For general duplicate scanning on the same device:
-            if (guest.checkInDevice === deviceId) {
-                return NextResponse.json({ status: "duplicate", guest }, { status: 200 });
-            } else {
-                return NextResponse.json({ status: "conflict", guest }, { status: 200 });
-            }
+        // 4. Seat Count & Duplicate Validation
+        if (guest.checkedInCount >= guest.allowedSeats) {
+            return NextResponse.json({
+                status: "FULL",
+                message: "Đã đủ số người",
+                guest
+            }, { status: 200 });
+        }
+
+        const isReplicaScan = guest.attendanceStatus === AttendanceStatus.ARRIVED && guest.checkInDevice === deviceId;
+        if (isReplicaScan) {
+            // If we really want "already checked in" vs "full"
+            // But the rules say if count >= seats -> FULL.
+            // Let's check if the specific device just scanned again.
+            return NextResponse.json({ status: "ALREADY_CHECKED_IN", guest }, { status: 200 });
         }
 
         // 5. Apply the official Check-in Transition
-        const finalCompanions = actualCompanions !== undefined ? actualCompanions : guest.companionsCount;
+        const isFirst = guest.checkedInCount === 0;
 
         guest.attendanceStatus = AttendanceStatus.ARRIVED;
-        guest.checkInTime = scanTime ? new Date(scanTime) : new Date();
+        guest.checkedInCount = (guest.checkedInCount || 0) + 1;
+
+        if (isFirst) {
+            guest.checkedInAt = new Date();
+            guest.checkInTime = guest.checkedInAt; // Support legacy field
+        }
+
         guest.checkInDevice = deviceId || "unknown";
         guest.scanCount = (guest.scanCount || 0) + 1;
-        guest.actualCompanions = finalCompanions;
+
+        if (actualCompanions !== undefined) {
+            guest.actualCompanions = actualCompanions;
+        }
 
         await guest.save();
 
-        return NextResponse.json({ status: "accepted", guest }, { status: 200 });
+        return NextResponse.json({
+            status: isFirst ? "FIRST_CHECKIN" : "ADDITIONAL_CHECKIN",
+            guest
+        }, { status: 200 });
 
     } catch (error) {
         console.error("Check-in Error:", error);

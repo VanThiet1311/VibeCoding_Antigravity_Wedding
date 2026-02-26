@@ -24,6 +24,7 @@ export interface IInvitationAlbum extends Document {
     eventDate: Date;
     location?: string;
     giftAmount?: number;
+    currency: string; // e.g., "VND", "USD"
     giftType: GiftTypeAlbum;
     attended: boolean;
     returnGiftPlanned: boolean; // Need to return gift later
@@ -41,6 +42,7 @@ const InvitationAlbumSchema: Schema = new Schema(
         eventDate: { type: Date, required: true },
         location: { type: String },
         giftAmount: { type: Number, default: 0 },
+        currency: { type: String, default: "VND" },
         giftType: { type: String, enum: Object.values(GiftTypeAlbum), default: GiftTypeAlbum.KHONG_CO },
         attended: { type: Boolean, default: false },
         returnGiftPlanned: { type: Boolean, default: false },

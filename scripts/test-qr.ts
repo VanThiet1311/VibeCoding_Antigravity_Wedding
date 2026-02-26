@@ -4,10 +4,11 @@ async function runTests() {
     console.log("=== QR Token Security Tests ===");
 
     const mockPayload = {
-        wid: "60d5ecb8b392d700153528a6", // mock mongoose object ids
-        cid: "60d5ecb8b392d700153528a7",
-        gid: "60d5ecb8b392d700153528a8",
-        iat: Date.now()
+        weddingId: "60d5ecb8b392d700153528a6",
+        ceremonyId: "60d5ecb8b392d700153528a7",
+        guestId: "60d5ecb8b392d700153528a8",
+        invitationId: "60d5ecb8b392d700153528a9",
+        issuedAt: Date.now()
     };
 
     // Test 1: Generate Token
@@ -22,12 +23,12 @@ async function runTests() {
     console.log("Verified Payload:", verified);
     console.assert(verified !== null, "Verification should succeed");
     if (verified) {
-        console.assert(verified.gid === mockPayload.gid, "Guest ID should match");
+        console.assert(verified.guestId === mockPayload.guestId, "Guest ID should match");
     }
 
     // Test 3: Tamper with Payload
     console.log("\n3. Testing Payload Tampering (Fake Guest ID)...");
-    const tamperedPayload = { ...mockPayload, gid: "hacked_id_123" };
+    const tamperedPayload = { ...mockPayload, guestId: "hacked_id_123" };
     const fakeBase64 = Buffer.from(JSON.stringify(tamperedPayload)).toString("base64url");
     const fakeToken = `${fakeBase64}.${token.split(".")[1]}`; // original signature
 

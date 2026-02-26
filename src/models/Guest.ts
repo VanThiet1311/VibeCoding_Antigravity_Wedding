@@ -13,12 +13,15 @@ export enum RSVPStatus {
 
 export enum AttendanceStatus {
     INVITED = "invited",
+    CONFIRMED = "confirmed",
     ARRIVED = "arrived",
     SEATED = "seated",
+    LEFT = "left",
 }
 
 export interface IGuest extends Document {
     ownerId: mongoose.Types.ObjectId;
+    weddingId: mongoose.Types.ObjectId;
     ceremonyId: mongoose.Types.ObjectId;
     personId: mongoose.Types.ObjectId;
     invitedSide: InvitedSide;
@@ -36,6 +39,10 @@ export interface IGuest extends Document {
     checkInDevice?: string;
     scanCount: number;
 
+    allowedSeats: number;
+    checkedInCount: number;
+    checkedInAt?: Date;
+
     createdAt: Date;
     updatedAt: Date;
 }
@@ -43,7 +50,8 @@ export interface IGuest extends Document {
 const GuestSchema: Schema = new Schema(
     {
         ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-        ceremonyId: { type: Schema.Types.ObjectId, ref: "Ceremony", required: true },
+        weddingId: { type: Schema.Types.ObjectId, ref: "Wedding", required: true, index: true },
+        ceremonyId: { type: Schema.Types.ObjectId, ref: "Ceremony", required: true, index: true },
         personId: { type: Schema.Types.ObjectId, ref: "Person", required: true },
         invitedSide: { type: String, enum: Object.values(InvitedSide), required: true },
         status: { type: String, enum: Object.values(RSVPStatus), default: RSVPStatus.PENDING },
@@ -59,14 +67,19 @@ const GuestSchema: Schema = new Schema(
         checkInTime: { type: Date },
         checkInDevice: { type: String },
         scanCount: { type: Number, default: 0 },
+
+        allowedSeats: { type: Number, default: 1 },
+        checkedInCount: { type: Number, default: 0 },
+        checkedInAt: { type: Date },
     },
     { timestamps: true }
 );
 
 // Unique compound index so a person is only added ONCE per ceremony
-GuestSchema.index({ ownerId: 1, ceremonyId: 1, personId: 1 }, { unique: true });
+GuestSchema.index({ ownerId: 1, weddingId: 1, ceremonyId: 1, personId: 1 }, { unique: true });
 
 // Required performance indexes
+GuestSchema.index({ ownerId: 1, weddingId: 1 });
 GuestSchema.index({ ownerId: 1, ceremonyId: 1 });
 GuestSchema.index({ ownerId: 1, personId: 1 });
 
